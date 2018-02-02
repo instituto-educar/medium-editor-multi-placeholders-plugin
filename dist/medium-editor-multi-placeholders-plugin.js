@@ -1,62 +1,92 @@
-var MediumEditorMultiPlaceholders = MediumEditor.Extension.extend({
-  name: 'multi_placeholder',
-  init:  function() {
-    this.placeholderElements = [];
-    this.initPlaceholders(this.placeholders, this.placeholderElements);
-    this.watchChanges();
-  },
+(function(root, factory) {
+  'use strict';
 
-  initPlaceholders: function (placeholders, elements) {
-      this.getEditorElements().forEach(function (editor) {
+  var isElectron =
+    typeof module === 'object' &&
+    typeof process !== 'undefined' &&
+    process &&
+    process.versions &&
+    process.versions.electron;
+
+  if (!isElectron && typeof module === 'object') {
+    module.exports = factory;
+  } else if (typeof define === 'function' && define.amd) {
+    define(function() {
+      return factory;
+    });
+  } else {
+    root.MediumEditor = factory;
+  }
+})(
+  this,
+  (function() {
+    'use strict';
+
+    var MediumEditorMultiPlaceholders = MediumEditor.Extension.extend({
+      name: 'multi_placeholder',
+      init: function() {
+        this.placeholderElements = [];
+        this.initPlaceholders(this.placeholders, this.placeholderElements);
+        this.watchChanges();
+      },
+
+      initPlaceholders: function(placeholders, elements) {
+        this.getEditorElements().forEach(function(editor) {
           this.placeholders.map(function(placeholder) {
             // Create the placeholder element
             var el = document.createElement(placeholder.tag);
-            el.appendChild(document.createElement('br'));
+            // el.appendChild(document.createElement('br'));
             el.setAttribute('data-placeholder', placeholder.text);
             elements.push(el);
             // Append it to Medium Editor element
             editor.appendChild(el);
             this.updatePlaceholder(el);
           }, this);
-      }, this);
-  },
-
-  destroy: function () {
-      this.getEditorElements().forEach(function (editor) {
-        editor.querySelectorAll('[data-placeholder]').map(function(el) {
-          el.removeAttribute('data-placeholder');
         }, this);
-      }, this);
-  },
+      },
 
-  showPlaceholder: function (el) {
-      if (el) {
+      destroy: function() {
+        this.getEditorElements().forEach(function(editor) {
+          editor.querySelectorAll('[data-placeholder]').map(function(el) {
+            el.removeAttribute('data-placeholder');
+          }, this);
+        }, this);
+      },
+
+      showPlaceholder: function(el) {
+        if (el) {
           el.classList.add('medium-editor-placeholder');
-      }
-  },
+        }
+      },
 
-  hidePlaceholder: function (el) {
-      if (el) {
+      hidePlaceholder: function(el) {
+        if (el) {
           el.classList.remove('medium-editor-placeholder');
-      }
-  },
+        }
+      },
 
-  updatePlaceholder: function (el) {
-      // if one of these element ('img, blockquote, ul, ol') are found inside the given element, we won't display the placeholder
-      if (el.textContent === '') {
+      updatePlaceholder: function(el) {
+        if (el.textContent === '') {
           return this.showPlaceholder(el);
+        }
+        this.hidePlaceholder(el);
+      },
+
+      updateAllPlaceholders: function() {
+        this.placeholderElements.map(function(el) {
+          this.updatePlaceholder(el);
+        }, this);
+      },
+
+      watchChanges: function() {
+        this.subscribe('editableInput', this.updateAllPlaceholders.bind(this));
+        this.subscribe(
+          'externalInteraction',
+          this.updateAllPlaceholders.bind(this)
+        );
       }
-      this.hidePlaceholder(el);
-  },
+    });
 
-  updateAllPlaceholders: function() {
-    this.placeholderElements.map(function(el){
-      this.updatePlaceholder(el);
-    }, this);
-  },
-
-  watchChanges: function() {
-    this.subscribe('editableInput', this.updateAllPlaceholders.bind(this));
-    this.subscribe('externalInteraction', this.updateAllPlaceholders.bind(this));
-  }
-});
+    return MediumEditorMultiPlaceholders;
+  })()
+);
