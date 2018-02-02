@@ -35,7 +35,7 @@
           this.placeholders.map(function(placeholder) {
             // Create the placeholder element
             var el = document.createElement(placeholder.tag);
-            el.appendChild(document.createElement('br'));
+            // el.appendChild(document.createElement('br'));
             el.setAttribute('data-placeholder', placeholder.text);
             elements.push(el);
             // Append it to Medium Editor element
